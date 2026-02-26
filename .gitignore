@@ -1,3 +1,11 @@
+# IDE and tool-specific directories
+.windsurf/
+.agent/
+.claude/
+.dotnet/
+docs/
+
+
 # Development settings with sensitive data
 src/Presentation/Platform.WebAPI/appsettings.Development.json
 
@@ -70,3 +78,6 @@ $RECYCLE.BIN/
 # Test results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+
+
+docker/compose/docker-compose.prod.yml
