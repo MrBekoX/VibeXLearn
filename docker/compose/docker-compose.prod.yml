@@ -1,0 +1,43 @@
+# docker/compose/docker-compose.prod.yml
+# Production: portlar kapalı, nginx terminasyonu, resource limitleri
+services:
+
+  postgres:
+    deploy:
+      resources:
+        limits:   { cpus: "1.0", memory: 1G }
+        reservations: { cpus: "0.5", memory: 512M }
+
+  redis:
+    deploy:
+      resources:
+        limits:   { cpus: "0.5", memory: 256M }
+
+  api:
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Swagger__Enabled: "false"
+    deploy:
+      replicas: 2
+      resources:
+        limits:   { cpus: "1.0", memory: 512M }
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: vibexlearn-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - api
+    networks:
+      - vibexlearn-net

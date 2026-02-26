@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Allow Persistence layer to access internal setters for audit fields -->
+    <InternalsVisibleTo>Platform.Persistence</InternalsVisibleTo>
+    <InternalsVisibleTo>Platform.Infrastructure</InternalsVisibleTo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- AppUser extends IdentityUser<Guid>; Domain needs Identity reference -->
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
+  </ItemGroup>
+
+</Project>

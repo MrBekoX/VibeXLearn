@@ -1,0 +1,132 @@
+# docker/compose/docker-compose.yml
+name: vibexlearn
+
+services:
+
+  # ── PostgreSQL 17 ──────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: vibexlearn-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA:            /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - vibexlearn-net
+
+  # ── Redis ──────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: vibexlearn-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      /usr/local/etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vibexlearn-net
+
+  # ── Elasticsearch ──────────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: vibexlearn-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+      - ../elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    healthcheck:
+      test: >
+        curl -s -u elastic:${ELASTIC_PASSWORD} http://localhost:9200/_cluster/health
+        | grep -qE '"status":"(green|yellow)"'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - vibexlearn-net
+
+  # ── Kibana ─────────────────────────────────────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    container_name: vibexlearn-kibana
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+    volumes:
+      - ../kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    networks:
+      - vibexlearn-net
+
+  # ── WebAPI ─────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ../../
+      dockerfile: src/Presentation/Platform.WebAPI/Dockerfile
+    container_name: vibexlearn-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT:              ${ASPNETCORE_ENVIRONMENT}
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Pooling=true;MinPoolSize=5;MaxPoolSize=100;CommandTimeout=30;"
+      ConnectionStrings__Redis:            "redis:${REDIS_PORT},password=${REDIS_PASSWORD}"
+      ConnectionStrings__Elasticsearch:    "http://elasticsearch:9200"
+      Jwt__Secret:                         ${JWT_SECRET}
+      Jwt__Issuer:                         ${JWT_ISSUER}
+      Jwt__Audience:                       ${JWT_AUDIENCE}
+      Iyzico__ApiKey:                      ${IYZICO_API_KEY}
+      Iyzico__SecretKey:                   ${IYZICO_SECRET_KEY}
+      Iyzico__BaseUrl:                     ${IYZICO_BASE_URL}
+      Iyzico__CallbackUrl:                 ${IYZICO_CALLBACK_URL}
+      ExternalServices__GitHub__PAT:       ${GITHUB_PAT}
+      ExternalServices__Zoom__AccountId:   ${ZOOM_ACCOUNT_ID}
+      ExternalServices__Zoom__ClientId:    ${ZOOM_CLIENT_ID}
+      ExternalServices__Zoom__ClientSecret: ${ZOOM_CLIENT_SECRET}
+      ExternalServices__Sertifier__ApiKey: ${SERTIFIER_API_KEY}
+      Elastic__Password:                   ${ELASTIC_PASSWORD}
+    networks:
+      - vibexlearn-net
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  elastic_data:
+    driver: local
+
+networks:
+  vibexlearn-net:
+    driver: bridge

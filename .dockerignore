@@ -1,0 +1,25 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+
+# Secrets — asla image'a girmesin
+.env
+**/*.pfx
+**/*.key
+docker/nginx/certs/
+
+# IDE & OS
+**/.vs/
+**/.idea/
+**/.DS_Store
+**/Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Test
+**/*.Tests/
+**/*.Test/
+**/TestResults/
