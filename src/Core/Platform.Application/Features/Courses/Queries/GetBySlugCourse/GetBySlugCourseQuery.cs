@@ -13,6 +13,5 @@ public sealed record GetBySlugCourseQuery(string Slug)
     : IRequest<Result<GetBySlugCourseQueryDto>>, ICacheableQuery
 {
     public string CacheKey => CourseCacheKeys.BySlug(Slug);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

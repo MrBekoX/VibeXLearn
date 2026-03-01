@@ -1,0 +1,16 @@
+# =============================================================================
+# VibeXLearn Platform - Grafana Dashboard Provisioning
+# =============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'VibeXLearn'
+    orgId: 1
+    folder: 'VibeXLearn'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

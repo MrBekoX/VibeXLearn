@@ -16,6 +16,8 @@ public sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.Property(u => u.AvatarUrl).HasMaxLength(500);
         builder.Property(u => u.Bio).HasMaxLength(1000);
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.HasQueryFilter(u => !u.IsDeleted);
 
         builder.HasIndex(u => u.CreatedAt).HasDatabaseName("ix_users_created_at");

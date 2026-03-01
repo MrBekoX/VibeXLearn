@@ -13,6 +13,5 @@ public sealed record GetByIdLiveSessionQuery(Guid LiveSessionId)
     : IRequest<Result<GetByIdLiveSessionQueryDto>>, ICacheableQuery
 {
     public string CacheKey => LiveSessionCacheKeys.GetById(LiveSessionId);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

@@ -10,4 +10,5 @@ namespace Platform.Application.Features.Payments.Commands.InitiateCheckout;
 public sealed record InitiateCheckoutCommand(
     Guid UserId,
     Guid CourseId,
-    string? CouponCode = null) : IRequest<Result<CheckoutResponseDto>>;
+    string? CouponCode = null,
+    string? BuyerIpAddress = null) : IRequest<Result<CheckoutResponseDto>>;

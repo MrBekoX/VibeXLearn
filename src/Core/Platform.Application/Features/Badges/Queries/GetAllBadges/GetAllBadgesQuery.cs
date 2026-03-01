@@ -21,6 +21,5 @@ public sealed record GetAllBadgesQuery(PageRequest PageRequest)
             return BadgeCacheKeys.GetAll(pr.Page, pr.PageSize);
         }
     }
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

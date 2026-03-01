@@ -1,9 +1,11 @@
 using FluentValidation;
+using Platform.Application.Extensions;
 using Platform.Infrastructure.Extensions;
 using Platform.Infrastructure.Middlewares;
 using Platform.Integration.Extensions;
 using Platform.Persistence.Extensions;
 using Platform.WebAPI.Extensions;
+using Platform.WebAPI.Filters;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +35,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(formO
     formOptions.BufferBodyLengthLimit = 10 * 1024 * 1024; // 10MB
 });
 
-// ── Serilog (SKILL: fix-logging-security) ───────────────────────────────────
+
 var elasticUrl = builder.Configuration.GetConnectionString("Elasticsearch")
     ?? "http://localhost:9200";
 
@@ -46,8 +48,12 @@ var loggerConfig = new LoggerConfiguration()
 // Add Elasticsearch with authentication if configured
 var elasticUsername = builder.Configuration["Elastic:Username"];
 var elasticPassword = builder.Configuration["Elastic:Password"];
+if (string.IsNullOrWhiteSpace(elasticUsername) && !string.IsNullOrWhiteSpace(elasticPassword))
+{
+    elasticUsername = "elastic";
+}
 
-if (!string.IsNullOrEmpty(elasticUsername) && !string.IsNullOrEmpty(elasticPassword))
+if (!string.IsNullOrWhiteSpace(elasticPassword))
 {
     // Production: Elasticsearch with authentication
     loggerConfig.WriteTo.Elasticsearch(new Serilog.Sinks.Elasticsearch.ElasticsearchSinkOptions(new Uri(elasticUrl))
@@ -56,7 +62,7 @@ if (!string.IsNullOrEmpty(elasticUsername) && !string.IsNullOrEmpty(elasticPassw
         AutoRegisterTemplateVersion = Serilog.Sinks.Elasticsearch.AutoRegisterTemplateVersion.ESv8,
         ModifyConnectionSettings = conn =>
         {
-            conn.BasicAuthentication(elasticUsername, elasticPassword);
+            conn.BasicAuthentication(elasticUsername!, elasticPassword);
             return conn;
         }
     });
@@ -77,28 +83,25 @@ builder.Host.UseSerilog();
 
 // ── Services ───────────────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddTransient<
+    Microsoft.Extensions.Options.IConfigureOptions<Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenOptions>,
+    ConfigureSwaggerOptions>();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
-        Title = "VibeXLearn API v1",
-        Version = "v1",
-        Description = "DEPRECATED — Will be sunset on " +
-            DateTimeOffset.UtcNow.AddMonths(6).ToString("yyyy-MM-dd") +
-            ". Please migrate to v2.",
-        Contact = new Microsoft.OpenApi.Models.OpenApiContact
-        {
-            Name = "API Support",
-            Email = "api@vibexlearn.com"
-        }
+        Name = "Authorization",
+        Description = "Enter JWT token as: Bearer {your token}",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
     });
 
-    options.SwaggerDoc("v2", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "VibeXLearn API v2",
-        Version = "v2",
-        Description = "Current stable version of the API."
-    });
+    // Version parametresine otomatik varsayilan deger
+    options.OperationFilter<SwaggerDefaultVersionFilter>();
+    options.OperationFilter<SwaggerAuthorizeOperationFilter>();
+    options.DocumentFilter<SwaggerVersionPathDocumentFilter>();
 });
 
 // OpenTelemetry distributed tracing & metrics
@@ -111,6 +114,7 @@ builder.Services.AddApiVersioningSetup();
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddIntegrations(builder.Configuration);
+builder.Services.AddApplicationServices();
 
 // Current user service (requires HttpContextAccessor)
 builder.Services.AddHttpContextAccessor();
@@ -188,15 +192,33 @@ app.Use(async (context, next) =>
 if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
+    var apiVersionDescriptionProvider =
+        app.Services.GetRequiredService<Asp.Versioning.ApiExplorer.IApiVersionDescriptionProvider>();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v2/swagger.json", "v2 (Current)");
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1 (Deprecated)");
+        foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions
+                     .OrderByDescending(d => d.ApiVersion))
+        {
+            var label = description.IsDeprecated
+                ? $"{description.GroupName} (Deprecated)"
+                : $"{description.GroupName} (Current)";
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", label);
+        }
     });
 }
 
 // HTTPS redirection
-app.UseHttpsRedirection();
+var hasHttpsPort =
+    !string.IsNullOrWhiteSpace(app.Configuration["HTTPS_PORTS"]) ||
+    !string.IsNullOrWhiteSpace(app.Configuration["ASPNETCORE_HTTPS_PORT"]);
+if (hasHttpsPort)
+{
+    app.UseHttpsRedirection();
+}
+else
+{
+    Log.Information("HTTPS redirection disabled because no HTTPS port is configured.");
+}
 
 // CORS
 app.UseCors("Frontend");

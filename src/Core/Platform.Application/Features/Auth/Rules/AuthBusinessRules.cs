@@ -15,14 +15,9 @@ public sealed class AuthBusinessRules(
         => new BusinessRule(
             "AUTH_EMAIL_EXISTS",
             AuthBusinessMessages.EmailAlreadyExists,
-            async ct =>
-            {
-                // IIdentityAccessService does not have email-based check,
-                // so this rule is validated inside AuthService via UserManager.
-                // This is a placeholder for the rule engine chain.
-                await Task.CompletedTask;
-                return Result.Success();
-            });
+            async ct => await identityAccess.EmailExistsAsync(email, ct)
+                ? Result.Fail(AuthBusinessMessages.EmailAlreadyExists)
+                : Result.Success());
 
     public IBusinessRule UserMustExist(Guid userId)
         => new BusinessRule(

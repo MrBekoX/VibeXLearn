@@ -15,6 +15,5 @@ public sealed record GetByInstructorCourseQuery(
     PageRequest PageRequest) : IRequest<Result<PagedResult<GetByInstructorCourseQueryDto>>>, IPagedQuery, ICacheableQuery
 {
     public string CacheKey => CourseCacheKeys.ByInstructor(InstructorId, PageRequest);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

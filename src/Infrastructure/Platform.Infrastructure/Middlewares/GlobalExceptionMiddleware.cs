@@ -23,6 +23,14 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                 "Domain exception [{Code}]. CorrelationId: {CorrelationId}",
                 ex.Code, correlationId);
 
+            if (ctx.Response.HasStarted)
+            {
+                logger.LogWarning(
+                    "Response already started. Skipping DomainException response write. CorrelationId: {CorrelationId}",
+                    correlationId);
+                return;
+            }
+
             var statusCode = MapToStatusCode(ex.Code);
 
             ctx.Response.StatusCode  = statusCode;
@@ -36,10 +44,46 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
                 Timestamp     = DateTime.UtcNow
             });
         }
+        catch (BadHttpRequestException ex)
+        {
+            var correlationId = ctx.TraceIdentifier;
+            logger.LogWarning(ex,
+                "Bad HTTP request. CorrelationId: {CorrelationId}",
+                correlationId);
+
+            if (ctx.Response.HasStarted)
+            {
+                logger.LogWarning(
+                    "Response already started. Skipping bad request response write. CorrelationId: {CorrelationId}",
+                    correlationId);
+                return;
+            }
+
+            ctx.Response.StatusCode = ex.StatusCode > 0
+                ? ex.StatusCode
+                : StatusCodes.Status400BadRequest;
+            ctx.Response.ContentType = "application/json";
+
+            await ctx.Response.WriteAsJsonAsync(new
+            {
+                Type = "BadRequest",
+                Message = ex.Message,
+                CorrelationId = correlationId,
+                Timestamp = DateTime.UtcNow
+            });
+        }
         catch (Exception ex)
         {
             var correlationId = ctx.TraceIdentifier;
             logger.LogError(ex, "Unhandled exception. CorrelationId: {CorrelationId}", correlationId);
+
+            if (ctx.Response.HasStarted)
+            {
+                logger.LogWarning(
+                    "Response already started. Skipping generic error response write. CorrelationId: {CorrelationId}",
+                    correlationId);
+                return;
+            }
 
             ctx.Response.StatusCode  = (int)HttpStatusCode.InternalServerError;
             ctx.Response.ContentType = "application/json";
@@ -83,4 +127,3 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
         _ => StatusCodes.Status400BadRequest
     };
 }
-

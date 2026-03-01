@@ -1,0 +1,62 @@
+# =============================================================================
+# VibeXLearn Platform - Prometheus Configuration
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'vibexlearn-prod'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # ── Prometheus Self-Monitoring ─────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ── .NET API Metrics ───────────────────────────────────────────────────────
+  - job_name: 'vibexlearn-api'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['api:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'api'
+
+  # ── PostgreSQL Exporter ────────────────────────────────────────────────────
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # ── Redis Exporter ─────────────────────────────────────────────────────────
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # ── Elasticsearch ──────────────────────────────────────────────────────────
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+
+  # ── Nginx Exporter ─────────────────────────────────────────────────────────
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+
+  # ── Node Exporter (Host Metrics) ───────────────────────────────────────────
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # ── cAdvisor (Container Metrics) ───────────────────────────────────────────
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']

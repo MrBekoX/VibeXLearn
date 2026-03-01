@@ -38,7 +38,8 @@ public sealed class IyzicoService : IIyzicoService
         CurrentUserDto buyer,
         Course course,
         decimal amount,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? buyerIpAddress = null)
     {
         var buyerPhone = _options.DefaultBuyerPhone;
         var buyerIdentityNumber = _options.DefaultBuyerIdentityNumber;
@@ -83,7 +84,7 @@ public sealed class IyzicoService : IIyzicoService
                     Email               = buyer.Email,
                     IdentityNumber      = buyerIdentityNumber,
                     RegistrationAddress = buyerAddress,
-                    Ip                  = "127.0.0.1",
+                    Ip                  = buyerIpAddress ?? "127.0.0.1",
                     Country             = buyerCountry,
                     City                = buyerCity,
                     ZipCode             = buyerZipCode
@@ -120,8 +121,7 @@ public sealed class IyzicoService : IIyzicoService
 
             var checkoutForm = await CheckoutFormInitialize.Create(request, _iyzicoOptions);
 
-            // FIXED: Use PaymentLogMasker for secure logging
-            var maskedToken = checkoutForm.Token?[..Math.Min(8, checkoutForm.Token?.Length ?? 0)] + "***";
+            var maskedToken = PaymentLogMasker.MaskToken(checkoutForm.Token);
 
             if (checkoutForm.Status == Status.SUCCESS.ToString())
             {
@@ -165,7 +165,8 @@ public sealed class IyzicoService : IIyzicoService
 
             _logger.LogInformation(
                 "{Event} | ConvId:{ConvId} | Status:{Status} | PaymentId:{PaymentId}",
-                "IYZICO_RETRIEVE", conversationId, result.Status, result.PaymentId);
+                "IYZICO_RETRIEVE", conversationId, result.Status,
+                PaymentLogMasker.MaskPaymentId(result.PaymentId));
 
             return new RetrieveCheckoutFormResult(
                 result.Status,

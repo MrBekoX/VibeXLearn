@@ -65,6 +65,9 @@ public static class PersistenceServiceExtensions
         services.AddScoped<IIdentityAccessService, IdentityAccessService>();
         services.AddScoped<IRolePermissionService, RolePermissionService>();
 
+        // Admin password initialization (reads from config at startup)
+        services.AddHostedService<AdminPasswordInitializer>();
+
         return services;
     }
 

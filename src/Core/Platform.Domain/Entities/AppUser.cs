@@ -9,14 +9,14 @@ namespace Platform.Domain.Entities;
 /// </summary>
 public class AppUser : IdentityUser<Guid>
 {
-    public string    FirstName  { get; set; } = default!;
-    public string    LastName   { get; set; } = default!;
-    public string?   AvatarUrl  { get; set; }
-    public string?   Bio        { get; set; }
-    public DateTime  CreatedAt  { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt  { get; set; }
-    public bool      IsDeleted  { get; set; } = false;
-    public DateTime? DeletedAt  { get; set; }
+    public string    FirstName  { get; private set; } = default!;
+    public string    LastName   { get; private set; } = default!;
+    public string?   AvatarUrl  { get; private set; }
+    public string?   Bio        { get; private set; }
+    public DateTime  CreatedAt  { get; private set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt  { get; private set; }
+    public bool      IsDeleted  { get; private set; } = false;
+    public DateTime? DeletedAt  { get; private set; }
 
     // Computed properties
     public string    FullName   => $"{FirstName} {LastName}".Trim();

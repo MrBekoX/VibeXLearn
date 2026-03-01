@@ -90,10 +90,40 @@ public class Category : AuditableEntity
             throw new DomainException("CATEGORY_SELF_PARENT",
                 "Category cannot be its own parent.");
 
-        // TODO: Add cycle detection for multi-level hierarchies
+        if (newParentId.HasValue)
+            EnsureNoCycle(newParentId.Value);
 
         ParentId = newParentId;
         MarkAsUpdated();
+    }
+
+    /// <summary>
+    /// Walks the parent chain to ensure assigning <paramref name="candidateParentId"/>
+    /// would not create a cycle (i.e., the candidate is not a descendant of this category).
+    /// Requires navigation properties to be loaded.
+    /// </summary>
+    private void EnsureNoCycle(Guid candidateParentId)
+    {
+        if (IsDescendant(candidateParentId))
+            throw new DomainException("CATEGORY_CYCLE",
+                "Moving to this parent would create a cycle in the category hierarchy.");
+    }
+
+    private bool IsDescendant(Guid ancestorId)
+    {
+        // Walk children recursively to check if ancestorId is among them
+        if (Children is null || Children.Count == 0)
+            return false;
+
+        foreach (var child in Children)
+        {
+            if (child.Id == ancestorId)
+                return true;
+            if (child.IsDescendant(ancestorId))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>

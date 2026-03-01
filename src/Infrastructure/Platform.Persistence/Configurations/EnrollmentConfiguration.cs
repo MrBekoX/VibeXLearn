@@ -10,6 +10,8 @@ public sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollmen
     {
         builder.ToTable("enrollments");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         // FIXED: Soft delete query filter - global filter for all queries
         builder.HasQueryFilter(e => !e.IsDeleted);
 

@@ -13,6 +13,5 @@ public sealed record GetByIdCourseQuery(Guid CourseId)
     : IRequest<Result<GetByIdCourseQueryDto>>, ICacheableQuery
 {
     public string CacheKey => CourseCacheKeys.GetById(CourseId);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

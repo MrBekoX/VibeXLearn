@@ -22,6 +22,5 @@ public sealed record GetByCourseEnrollmentQuery(
             return EnrollmentCacheKeys.ByCourse(CourseId, pr.Page, pr.PageSize);
         }
     }
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

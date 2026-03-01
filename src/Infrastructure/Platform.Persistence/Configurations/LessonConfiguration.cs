@@ -10,6 +10,8 @@ public sealed class LessonConfiguration : IEntityTypeConfiguration<Lesson>
     {
         builder.ToTable("lessons");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.Property(l => l.Title).IsRequired().HasMaxLength(200);
         builder.Property(l => l.Description).HasMaxLength(2000);
         builder.Property(l => l.VideoUrl).HasMaxLength(500);

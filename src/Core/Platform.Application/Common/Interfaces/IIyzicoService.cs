@@ -17,7 +17,8 @@ public interface IIyzicoService
         CurrentUserDto buyer,
         Course       course,
         decimal      amount,
-        CancellationToken ct);
+        CancellationToken ct,
+        string?      buyerIpAddress = null);
 
     /// <summary>
     /// Queries Iyzico to verify the checkout result by token.

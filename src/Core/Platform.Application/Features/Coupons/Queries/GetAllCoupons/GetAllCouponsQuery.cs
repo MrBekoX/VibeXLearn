@@ -21,6 +21,5 @@ public sealed record GetAllCouponsQuery(PageRequest PageRequest)
             return CouponCacheKeys.GetAll(pr.Page, pr.PageSize);
         }
     }
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

@@ -10,6 +10,5 @@ public sealed record GetBySlugCategoryQuery(string Slug)
     : IRequest<Result<GetByIdCategoryQueryDto>>, ICacheableQuery
 {
     public string CacheKey => CategoryCacheKeys.BySlug(Slug);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

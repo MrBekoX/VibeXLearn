@@ -46,7 +46,7 @@ public sealed class CreateBadgeCommandValidator : AbstractValidator<CreateBadgeC
             JsonDocument.Parse(json);
             return true;
         }
-        catch
+        catch (JsonException)
         {
             return false;
         }

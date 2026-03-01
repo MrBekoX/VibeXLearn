@@ -35,8 +35,11 @@ public static class HttpPolicies
     /// Circuit breaker: Opens after 5 consecutive failures, stays open for 30s.
     /// Prevents cascade failures when external service is down.
     /// </summary>
-    public static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+    public static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy(
+        ILoggerFactory? loggerFactory = null)
     {
+        var logger = loggerFactory?.CreateLogger("HttpCircuitBreaker");
+
         return HttpPolicyExtensions
             .HandleTransientHttpError()
             .CircuitBreakerAsync(
@@ -44,11 +47,19 @@ public static class HttpPolicies
                 durationOfBreak: TimeSpan.FromSeconds(30),
                 onBreak: (outcome, duration) =>
                 {
-                    // Circuit opened — external service is considered down
+                    logger?.LogWarning(
+                        "Circuit breaker OPENED for {Duration}s. Last status: {Status}, Exception: {Error}",
+                        duration.TotalSeconds,
+                        outcome.Result?.StatusCode,
+                        outcome.Exception?.Message);
                 },
                 onReset: () =>
                 {
-                    // Circuit closed — external service recovered
+                    logger?.LogInformation("Circuit breaker CLOSED — external service recovered");
+                },
+                onHalfOpen: () =>
+                {
+                    logger?.LogInformation("Circuit breaker HALF-OPEN — testing external service");
                 });
     }
 
@@ -63,11 +74,12 @@ public static class HttpPolicies
     /// <summary>
     /// Combined policy wrap: Timeout → Circuit Breaker → Retry
     /// </summary>
-    public static IAsyncPolicy<HttpResponseMessage> GetCombinedPolicy()
+    public static IAsyncPolicy<HttpResponseMessage> GetCombinedPolicy(
+        ILoggerFactory? loggerFactory = null)
     {
         return Policy.WrapAsync(
             GetTimeoutPolicy(),
-            GetCircuitBreakerPolicy(),
+            GetCircuitBreakerPolicy(loggerFactory),
             GetRetryPolicy());
     }
 }

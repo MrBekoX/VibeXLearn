@@ -14,6 +14,8 @@ public sealed class BadgeConfiguration : IEntityTypeConfiguration<Badge>
     {
         builder.ToTable("badges");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         // FIXED: Soft delete query filter - global filter for all queries
         builder.HasQueryFilter(b => !b.IsDeleted);
 

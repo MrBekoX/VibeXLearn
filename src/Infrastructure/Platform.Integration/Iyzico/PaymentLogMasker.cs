@@ -21,4 +21,18 @@ public static class PaymentLogMasker
                 : "****";
             return $@"""{key}"": ""{masked}""";
         });
+
+    public static string MaskToken(string? token)
+    {
+        if (string.IsNullOrEmpty(token))
+            return "***";
+        return token[..Math.Min(8, token.Length)] + "***";
+    }
+
+    public static string MaskPaymentId(string? paymentId)
+    {
+        if (string.IsNullOrEmpty(paymentId))
+            return "***";
+        return paymentId[..Math.Min(4, paymentId.Length)] + "***";
+    }
 }

@@ -17,6 +17,8 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
     {
         builder.ToTable("categories");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.Property(c => c.Name).IsRequired().HasMaxLength(150);
         builder.Property(c => c.Slug).IsRequired().HasMaxLength(150);
         builder.Property(c => c.Description).HasMaxLength(500);

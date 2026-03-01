@@ -9,7 +9,7 @@ public static class ApiVersioningExtensions
 {
     public static IServiceCollection AddApiVersioningSetup(this IServiceCollection services)
     {
-        services.AddApiVersioning(opt =>
+        var apiVersioning = services.AddApiVersioning(opt =>
         {
             // Default version
             opt.DefaultApiVersion = new ApiVersion(1, 0);
@@ -29,6 +29,12 @@ public static class ApiVersioningExtensions
                 .Link("https://docs.vibexlearn.com/api/migration-v1-to-v2")
                     .Title("Migration Guide V1 to V2")
                     .Type("text/html");
+        });
+
+        apiVersioning.AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'V";
+            options.SubstituteApiVersionInUrl = true;
         });
 
         return services;

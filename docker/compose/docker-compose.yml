@@ -3,9 +3,9 @@ name: vibexlearn
 
 services:
 
-  # ── PostgreSQL 17 ──────────────────────────────────────────────────────
+  # ── PostgreSQL 18 ──────────────────────────────────────────────────────
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: vibexlearn-postgres
     restart: unless-stopped
     environment:
@@ -27,7 +27,7 @@ services:
 
   # ── Redis ──────────────────────────────────────────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     container_name: vibexlearn-redis
     restart: unless-stopped
     command: >
@@ -47,20 +47,20 @@ services:
 
   # ── Elasticsearch ──────────────────────────────────────────────────────
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.1
     container_name: vibexlearn-elasticsearch
     restart: unless-stopped
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=true
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
     volumes:
       - elastic_data:/usr/share/elasticsearch/data
       - ../elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
     healthcheck:
       test: >
-        curl -s -u elastic:${ELASTIC_PASSWORD} http://localhost:9200/_cluster/health
+        curl -s -u elastic:${ELASTICSEARCH_PASSWORD} http://localhost:9200/_cluster/health
         | grep -qE '"status":"(green|yellow)"'
       interval: 30s
       timeout: 10s
@@ -69,18 +69,48 @@ services:
     networks:
       - vibexlearn-net
 
+  # ── Kibana Setup (sets kibana_system password once) ────────────────────
+  kibana-setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.1
+    container_name: vibexlearn-kibana-setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
+    # FIX: command must be list form. Using "command: > bash -c ..." causes YAML
+    # "more-indented lines" rule to preserve newlines, so bash receives curl options
+    # as separate commands (-X, -H, -d each become "command not found").
+    # With list form + >- scalar at uniform indentation, newlines fold to spaces.
+    command:
+      - bash
+      - -c
+      - >-
+          curl -sf
+          -X POST http://elasticsearch:9200/_security/user/kibana_system/_password
+          -u "elastic:$${ELASTIC_PASSWORD}"
+          -H "Content-Type: application/json"
+          -d "{\"password\":\"$${ELASTIC_PASSWORD}\"}"
+          && echo "kibana_system password set"
+    networks:
+      - vibexlearn-net
+    restart: on-failure
+
   # ── Kibana ─────────────────────────────────────────────────────────────
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.15.0
+    image: docker.elastic.co/kibana/kibana:9.3.1
     container_name: vibexlearn-kibana
     restart: unless-stopped
     depends_on:
       elasticsearch:
         condition: service_healthy
+      kibana-setup:
+        condition: service_completed_successfully
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ELASTICSEARCH_PASSWORD}
     volumes:
       - ../kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
@@ -115,7 +145,8 @@ services:
       ExternalServices__Zoom__ClientId:    ${ZOOM_CLIENT_ID}
       ExternalServices__Zoom__ClientSecret: ${ZOOM_CLIENT_SECRET}
       ExternalServices__Sertifier__ApiKey: ${SERTIFIER_API_KEY}
-      Elastic__Password:                   ${ELASTIC_PASSWORD}
+      Elastic__Username:                   ${ELASTICSEARCH_USERNAME}
+      Elastic__Password:                   ${ELASTICSEARCH_PASSWORD}
     networks:
       - vibexlearn-net
 

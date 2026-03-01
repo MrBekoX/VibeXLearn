@@ -74,7 +74,7 @@ public sealed class InitiateCheckoutCommandHandler(
         try
         {
             var checkoutResult = await iyzicoService.InitiateCheckoutAsync(
-                conversationId, user, course, order.FinalAmount, ct);
+                conversationId, user, course, order.FinalAmount, ct, request.BuyerIpAddress);
 
             if (checkoutResult.IsFailure)
             {

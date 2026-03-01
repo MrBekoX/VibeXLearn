@@ -68,9 +68,11 @@ public static class PaymentEndpoints
             CheckoutRequest dto,
             IMediator mediator,
             Platform.Application.Common.Interfaces.ICurrentUserService currentUser,
+            HttpContext http,
             CancellationToken ct) =>
         {
-            var result = await mediator.Send(new InitiateCheckoutCommand(currentUser.GetUserId(), dto.CourseId, dto.CouponCode), ct);
+            var buyerIp = http.Connection.RemoteIpAddress?.ToString();
+            var result = await mediator.Send(new InitiateCheckoutCommand(currentUser.GetUserId(), dto.CourseId, dto.CouponCode, buyerIp), ct);
             return result.IsSuccess
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(new { error = result.Error.Message });

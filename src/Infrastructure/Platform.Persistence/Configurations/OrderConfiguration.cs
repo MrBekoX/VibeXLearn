@@ -10,6 +10,8 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
     {
         builder.ToTable("orders");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.Property(o => o.Amount).HasPrecision(10, 2);
         builder.Property(o => o.DiscountAmount).HasPrecision(10, 2);
         builder.Property(o => o.Currency).IsRequired().HasMaxLength(3);

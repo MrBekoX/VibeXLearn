@@ -13,6 +13,5 @@ public sealed record GetByIdCouponQuery(Guid CouponId)
     : IRequest<Result<GetByIdCouponQueryDto>>, ICacheableQuery
 {
     public string CacheKey => CouponCacheKeys.GetById(CouponId);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

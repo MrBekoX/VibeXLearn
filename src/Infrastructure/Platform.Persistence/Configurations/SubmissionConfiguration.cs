@@ -10,6 +10,8 @@ public sealed class SubmissionConfiguration : IEntityTypeConfiguration<Submissio
     {
         builder.ToTable("submissions");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.Property(s => s.RepoUrl).IsRequired().HasMaxLength(500);
         builder.Property(s => s.CommitSha).HasMaxLength(40);
         builder.Property(s => s.Branch).HasMaxLength(200);

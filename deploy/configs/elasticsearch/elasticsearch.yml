@@ -1,0 +1,13 @@
+cluster.name: vibexlearn-cluster
+node.name: vibexlearn-node
+
+network.host: 0.0.0.0
+http.port: 9200
+
+discovery.type: single-node
+
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: false
+
+path.data: /usr/share/elasticsearch/data
+path.logs: /usr/share/elasticsearch/logs

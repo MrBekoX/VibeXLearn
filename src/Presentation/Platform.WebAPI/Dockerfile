@@ -22,8 +22,14 @@ RUN dotnet publish src/Presentation/Platform.WebAPI/Platform.WebAPI.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# Güvenlik: root olmayan kullanıcı
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+# Native deps required by some database/network auth paths (e.g., GSSAPI).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Güvenlik: root olmayan kullanıcı (Debian komutları)
+RUN groupadd -r appgroup && useradd -r -g appgroup -d /app -s /sbin/nologin appuser
+RUN chown -R appuser:appgroup /app
 USER appuser
 
 COPY --from=build /app/publish .

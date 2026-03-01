@@ -10,6 +10,8 @@ public sealed class LiveSessionConfiguration : IEntityTypeConfiguration<LiveSess
     {
         builder.ToTable("live_sessions");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         // FIXED: Soft delete query filter - global filter for all queries
         builder.HasQueryFilter(ls => !ls.IsDeleted);
 

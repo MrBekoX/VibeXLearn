@@ -221,7 +221,13 @@ public sealed class KeyRotationService : IHostedService
 
         var filePath = _config["Jwt:RsaPrivateKeyPath"];
         if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+        {
+            _logger.LogInformation(
+                "Loading RSA private key from file: {FilePath}. " +
+                "Ensure file permissions are restricted (e.g., chmod 600) to prevent unauthorized access",
+                filePath);
             return File.ReadAllText(filePath);
+        }
 
         return null;
     }
@@ -234,7 +240,11 @@ public sealed class KeyRotationService : IHostedService
 
         var filePath = _config["Jwt:RsaPublicKeyPath"];
         if (!string.IsNullOrEmpty(filePath) && File.Exists(filePath))
+        {
+            _logger.LogInformation(
+                "Loading RSA public key from file: {FilePath}", filePath);
             return File.ReadAllText(filePath);
+        }
 
         return null;
     }

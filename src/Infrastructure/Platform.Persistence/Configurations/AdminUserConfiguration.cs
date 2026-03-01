@@ -22,8 +22,8 @@ public sealed class AdminUserConfiguration :
 
     public void Configure(EntityTypeBuilder<AppUser> builder)
     {
-        var hasher    = new PasswordHasher<AppUser>();
-        var adminUser = new AppUser
+        // Seed only non-sensitive fields; password is set at runtime by AdminPasswordInitializer.
+        builder.HasData(new
         {
             Id                 = AdminId,
             UserName           = "admin@vibexlearn.com",
@@ -35,13 +35,19 @@ public sealed class AdminUserConfiguration :
             LastName           = "Admin",
             SecurityStamp      = "STATIC_SECURITY_STAMP_SEED_V1",
             ConcurrencyStamp   = "STATIC_CONCURRENCY_STAMP_SEED_V1",
-            CreatedAt          = SeedDate
-        };
-
-        adminUser.PasswordHash = hasher.HashPassword(adminUser, "Admin123!");
-        // ⚠️ PRODUCTION'DA BU ŞİFRE MUTLAKA DEĞİŞTİRİLMELİDİR.
-
-        builder.HasData(adminUser);
+            CreatedAt          = SeedDate,
+            IsDeleted          = false,
+            DeletedAt          = (DateTime?)null,
+            UpdatedAt          = (DateTime?)null,
+            AvatarUrl          = (string?)null,
+            Bio                = (string?)null,
+            PhoneNumber        = (string?)null,
+            PhoneNumberConfirmed = false,
+            TwoFactorEnabled   = false,
+            LockoutEnd         = (DateTimeOffset?)null,
+            LockoutEnabled     = false,
+            AccessFailedCount  = 0
+        });
     }
 
     public void Configure(EntityTypeBuilder<AppRole> builder)

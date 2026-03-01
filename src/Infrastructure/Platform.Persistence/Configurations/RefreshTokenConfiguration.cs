@@ -17,6 +17,10 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
             .IsUnique().HasDatabaseName("ix_refresh_tokens_token");
         builder.HasIndex(r => new { r.UserId, r.IsRevoked })
             .HasDatabaseName("ix_refresh_tokens_user_revoked");
+        builder.HasIndex(r => r.ExpiresAt)
+            .HasDatabaseName("ix_refresh_tokens_expires_at");
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
 
         builder.HasOne(r => r.User)
             .WithMany(u => u.RefreshTokens)

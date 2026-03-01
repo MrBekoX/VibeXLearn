@@ -37,8 +37,11 @@ public class SensitiveDataEnricher : ILogEventEnricher
         // Credit card pattern (13-19 digits)
         new(@"\b\d{13,19}\b", RegexOptions.Compiled),
 
-        // Email pattern for potential PII (optional - uncomment if needed)
-        // new(@"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", RegexOptions.Compiled),
+        // Email pattern for PII masking
+        new(@"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", RegexOptions.Compiled),
+
+        // Phone number pattern
+        new(@"\+?\d[\d\s\-]{7,}\d", RegexOptions.Compiled),
 
         // JWT token pattern (three base64 parts separated by dots)
         new(@"eyJ[A-Za-z0-9_-]*\.eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*", RegexOptions.Compiled)

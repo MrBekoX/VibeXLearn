@@ -16,6 +16,14 @@ public sealed class IdentityAccessService(AppDbContext db) : IIdentityAccessServ
             .AsNoTracking()
             .AnyAsync(u => u.Id == userId && !u.IsDeleted, ct);
 
+    public Task<bool> EmailExistsAsync(string email, CancellationToken ct)
+    {
+        var normalized = email.Trim().ToUpperInvariant();
+        return db.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.NormalizedEmail == normalized && !u.IsDeleted, ct);
+    }
+
     public Task<bool> UserInRoleAsync(Guid userId, string roleName, CancellationToken ct)
     {
         var normalizedRoleName = NormalizeRoleName(roleName);

@@ -10,6 +10,8 @@ public sealed class CertificateConfiguration : IEntityTypeConfiguration<Certific
     {
         builder.ToTable("certificates");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         // FIXED: Soft delete query filter - global filter for all queries
         builder.HasQueryFilter(c => !c.IsDeleted);
 

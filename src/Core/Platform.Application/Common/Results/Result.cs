@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Platform.Application.Common.Results;
 
 namespace Platform.Application.Common.Results;
@@ -18,9 +19,14 @@ public class Result
         Error     = error;
     }
 
-    public bool  IsSuccess { get; }
+    // JSON deserialization için parameterless constructor
+    protected Result() { }
+
+    [JsonInclude]
+    public bool  IsSuccess { get; init; }
     public bool  IsFailure => !IsSuccess;
-    public Error Error     { get; }
+    [JsonInclude]
+    public Error Error     { get; init; } = Error.None;
 
     public static Result Success()              => new(true,  Error.None);
     public static Result Fail(Error error)      => new(false, error);
@@ -38,14 +44,22 @@ public class Result
 /// </summary>
 public sealed class Result<T> : Result
 {
-    private readonly T? _value;
+    private T? _value;
 
     private Result(T? value, Error error, bool success) : base(success, error)
         => _value = value;
 
-    public T Value => IsSuccess
-        ? _value!
-        : throw new InvalidOperationException("Cannot access value of a failed result.");
+    // JSON deserialization için parameterless constructor
+    public Result() { }
+
+    [JsonInclude]
+    public T Value
+    {
+        get => IsSuccess
+            ? _value!
+            : throw new InvalidOperationException("Cannot access value of a failed result.");
+        init => _value = value;
+    }
 
     public static Result<T> Success(T value) => new(value, Error.None, true);
     public new static Result<T> Fail(Error error) => new(default, error, false);

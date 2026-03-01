@@ -24,6 +24,10 @@ public static class InfrastructureServiceExtensions
         // ── CacheSettings (typed options) ──────────────────────────────────
         services.Configure<CacheSettings>(config.GetSection(CacheSettings.SectionName));
 
+        // ── API Deprecation options ─────────────────────────────────────────
+        services.Configure<Middlewares.ApiDeprecationOptions>(
+            config.GetSection(Middlewares.ApiDeprecationOptions.SectionName));
+
         // ── L1: In-process memory cache ────────────────────────────────────
         services.AddMemoryCache();
 
@@ -56,8 +60,16 @@ public static class InfrastructureServiceExtensions
         services.AddSingleton<L1InvalidationSubscriber>();
         services.AddHostedService(sp => sp.GetRequiredService<L1InvalidationSubscriber>());
 
-        // ── Phase 3: Serialization ───────────────────────────────────────
-        services.AddSingleton<ICacheSerializer, JsonCacheSerializer>();
+        // ── Phase 3: Serialization (configurable via CacheSettings.SerializerMode) ──
+        services.AddSingleton<ICacheSerializer>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<CacheSettings>>().Value;
+            return settings.SerializerMode switch
+            {
+                CacheSerializerMode.MessagePackOnly => new Serialization.MessagePackCacheSerializer(),
+                _ => new JsonCacheSerializer()
+            };
+        });
 
         // ── Phase 4: Tag-Based Invalidation ──────────────────────────────
         services.AddSingleton<ICacheTagManager, CacheTagManager>();

@@ -14,6 +14,8 @@ public sealed class CourseConfiguration : IEntityTypeConfiguration<Course>
     {
         builder.ToTable("courses");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.Property(c => c.Title).IsRequired().HasMaxLength(200);
         builder.Property(c => c.Slug).IsRequired().HasMaxLength(200);
         builder.Property(c => c.Description).HasMaxLength(5000);

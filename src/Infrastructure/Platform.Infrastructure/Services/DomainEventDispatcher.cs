@@ -7,8 +7,7 @@ namespace Platform.Infrastructure.Services;
 
 /// <summary>
 /// Dispatches domain events using MediatR.
-/// Events are dispatched as notifications (fire-and-forget).
-/// SKILL: fix-domain-architecture
+/// Collects handler failures and re-throws after all handlers run.
 /// </summary>
 public sealed class DomainEventDispatcher(
     IPublisher publisher,
@@ -18,7 +17,6 @@ public sealed class DomainEventDispatcher(
     {
         try
         {
-            // Wrap domain event as MediatR notification
             await publisher.Publish(new DomainEventNotification(@event), ct);
 
             logger.LogDebug(
@@ -30,16 +28,33 @@ public sealed class DomainEventDispatcher(
             logger.LogError(ex,
                 "Failed to dispatch domain event: {EventType}",
                 @event.GetType().Name);
-            // Don't throw - event dispatch failure shouldn't break the transaction
+            throw;
         }
     }
 
     public async Task DispatchAllAsync(IEnumerable<IDomainEvent> events, CancellationToken ct = default)
     {
+        List<Exception>? exceptions = null;
+
         foreach (var @event in events)
         {
-            await DispatchAsync(@event, ct);
+            try
+            {
+                await DispatchAsync(@event, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Handler failure for domain event {EventType}; continuing with remaining events",
+                    @event.GetType().Name);
+                exceptions ??= [];
+                exceptions.Add(ex);
+            }
         }
+
+        if (exceptions is { Count: > 0 })
+            throw new AggregateException(
+                "One or more domain event handlers failed.", exceptions);
     }
 }
 

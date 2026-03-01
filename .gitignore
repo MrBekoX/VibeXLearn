@@ -5,7 +5,6 @@
 .dotnet/
 docs/
 
-
 # Development settings with sensitive data
 src/Presentation/Platform.WebAPI/appsettings.Development.json
 
@@ -80,4 +79,13 @@ $RECYCLE.BIN/
 [Bb]uild[Ll]og.*
 
 
+# Docker - Production
 docker/compose/docker-compose.prod.yml
+
+# Deploy - Sensitive files
+deploy/.env
+deploy/.env.production
+deploy/.deploy_info
+deploy/nginx/ssl/*.pem
+deploy/nginx/ssl/*.key
+deploy/nginx/logs/*

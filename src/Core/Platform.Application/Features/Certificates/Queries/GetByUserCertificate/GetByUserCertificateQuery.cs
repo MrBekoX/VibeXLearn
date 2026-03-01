@@ -13,6 +13,5 @@ public sealed record GetByUserCertificateQuery(Guid UserId)
     : IRequest<Result<IList<GetByUserCertificateQueryDto>>>, ICacheableQuery
 {
     public string CacheKey => CertificateCacheKeys.ByUser(UserId);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

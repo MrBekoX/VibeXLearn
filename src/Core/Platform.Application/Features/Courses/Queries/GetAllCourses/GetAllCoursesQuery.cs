@@ -14,6 +14,5 @@ public sealed record GetAllCoursesQuery(PageRequest PageRequest)
     : IRequest<Result<PagedResult<GetAllCoursesQueryDto>>>, IPagedQuery, ICacheableQuery
 {
     public string CacheKey => CourseCacheKeys.GetAll(PageRequest.Normalize());
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

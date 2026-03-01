@@ -10,6 +10,5 @@ public sealed record GetByIdCategoryQuery(Guid CategoryId)
     : IRequest<Result<GetByIdCategoryQueryDto>>, ICacheableQuery
 {
     public string CacheKey => CategoryCacheKeys.GetById(CategoryId);
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

@@ -6,6 +6,7 @@ namespace Platform.Application.Common.Interfaces;
 public interface IIdentityAccessService
 {
     Task<bool> UserExistsAsync(Guid userId, CancellationToken ct);
+    Task<bool> EmailExistsAsync(string email, CancellationToken ct);
     Task<bool> UserInRoleAsync(Guid userId, string roleName, CancellationToken ct);
     Task<bool> RoleExistsAsync(string roleName, CancellationToken ct);
     Task<bool> RoleHasPermissionAsync(string roleName, string permission, CancellationToken ct);

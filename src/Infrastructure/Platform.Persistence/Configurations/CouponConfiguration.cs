@@ -10,6 +10,8 @@ public sealed class CouponConfiguration : IEntityTypeConfiguration<Coupon>
     {
         builder.ToTable("coupons");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         // FIXED: Soft delete query filter - global filter for all queries
         builder.HasQueryFilter(c => !c.IsDeleted);
 

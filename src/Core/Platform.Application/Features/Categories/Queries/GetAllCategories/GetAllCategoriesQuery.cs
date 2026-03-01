@@ -14,6 +14,5 @@ public sealed record GetAllCategoriesQuery(PageRequest PageRequest)
     : IRequest<Result<PagedResult<GetAllCategoriesQueryDto>>>, IPagedQuery, ICacheableQuery
 {
     public string CacheKey => CategoryCacheKeys.GetAll(PageRequest.Normalize());
-    public TimeSpan L2Duration => TimeSpan.Zero;
     public bool BypassCache => false;
 }

@@ -9,9 +9,7 @@
     <InternalsVisibleTo>Platform.Persistence</InternalsVisibleTo>
     <InternalsVisibleTo>Platform.Infrastructure</InternalsVisibleTo>
   </PropertyGroup>
-
   <ItemGroup>
-    <!-- AppUser extends IdentityUser<Guid>; Domain needs Identity reference -->
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
   </ItemGroup>
 
